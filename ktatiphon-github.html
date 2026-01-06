@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <title>Kratophon Web v1.9</title>
+    <style>
+        body { background-color: black; color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        #controls { background: #1a1a1a; padding: 5px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; border-bottom: 1px solid #333; z-index: 100; }
+        .group { display: flex; gap: 4px; align-items: center; border-right: 1px solid #444; padding-right: 8px; }
+        button { padding: 6px 10px; cursor: pointer; background: #333; color: white; border: 1px solid #555; border-radius: 4px; font-weight: bold; font-size: 14px; }
+        #btn-toggle { min-width: 80px; }
+        .running { background: #2d5a27; }
+        .stopped { background: #b30000; }
+        #output-container { flex-grow: 1; padding: 10px 15px; overflow-y: auto; }
+        #output { font-size: 32px; line-height: 1.2; overflow-wrap: break-word; padding-bottom: 40vh; }
+        .interim { color: inherit; opacity: 0.7; }
+        #help { background: #b30000; color: white; padding: 5px; text-align: center; display: none; }
+    </style>
+</head>
+<body>
+    <div id="help">POVOLTE MIKROFON V NASTAVENÍ PROHLÍŽEČE!</div>
+    <div id="controls">
+        <button id="btn-toggle" onclick="toggle()" class="stopped">START</button>
+        <div class="group">
+            <button onclick="sz(4)">Písmo +</button>
+            <button onclick="sz(-4)">Písmo -</button>
+        </div>
+        <div class="group">
+            <button onclick="bg('black')" style="background:black; width:22px; height:22px; border:1px solid #666"></button>
+            <button onclick="bg('white')" style="background:white; width:22px; height:22px; border:1px solid #666"></button>
+            <button onclick="bg('navy')" style="background:navy; width:22px; height:22px; border:1px solid #666"></button>
+        </div>
+        <div class="group">
+            <button onclick="fg('white')" style="background:white; width:22px; height:22px; border:1px solid #666"></button>
+            <button onclick="fg('yellow')" style="background:yellow; width:22px; height:22px; border:1px solid #666"></button>
+            <button onclick="fg('silver')" style="background:silver; width:22px; height:22px; border:1px solid #666"></button>
+        </div>
+        <button onclick="cp()">Kopírovat</button>
+        <button onclick="cl()" style="background:#600">Smazat</button>
+    </div>
+    <div id="output-container"><div id="output" style="height: 50%">Klepněte na START a povolte mikrofon...</div></div>
+    <script>
+        const out = document.getElementById('output');
+        const btn = document.getElementById('btn-toggle');
+        const cnt = document.getElementById('output-container');
+        let run = false, txt = '';
+        const rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        rec.lang = 'cs-CZ'; rec.interimResults = true; rec.continuous = true;
+        function toggle() {
+            if (run) { rec.stop(); run = false; btn.innerText = "START"; btn.className = "stopped"; }
+            else { try { rec.start(); run = true; btn.innerText = "STOP"; btn.className = "running"; if(out.innerText.includes("Klepněte")) out.innerHTML = ""; } catch(e) {} }
+        }
+        rec.onresult = (e) => {
+            let interim = '';
+            for (let i = e.resultIndex; i < e.results.length; ++i) {
+                if (e.results[i].isFinal) txt += e.results[i][0].transcript + ' ';
+                else interim += e.results[i][0].transcript;
+            }
+            out.innerHTML = txt + '<span class="interim">' + interim + '</span>';
+            cnt.scrollTop = cnt.scrollHeight;
+        };
+        rec.onend = () => { if (run) try { rec.start(); } catch(e) {} };
+        rec.onerror = (e) => { if (e.error === 'not-allowed') document.getElementById('help').style.display = "block"; };
+        function sz(d) { let s = parseInt(window.getComputedStyle(out).fontSize); out.style.fontSize = (s + d) + 'px'; }
+        function bg(c) { document.body.style.backgroundColor = c; }
+        function fg(c) { out.style.color = c; }
+        function cl() { txt = ''; out.innerHTML = ''; }
+        function cp() { navigator.clipboard.writeText(out.innerText); let t = btn.innerText; btn.innerText = "OK!"; setTimeout(() => btn.innerText = t, 1000); }
+    </script>
+</body>
+</html>
