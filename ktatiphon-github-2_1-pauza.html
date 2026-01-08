@@ -43,6 +43,7 @@
         <button onclick="cl()" style="background:#600">Smazat</button>
     </div>
     <div id="output-container"><div id="output" style="height: 50%">Klikněte na START...</div></div>
+    <script>
 const out = document.getElementById('output');
         const btn = document.getElementById('btn-toggle');
         const cnt = document.getElementById('output-container');
@@ -106,5 +107,7 @@ const out = document.getElementById('output');
             btn.innerText = "OK!"; 
             setTimeout(() => btn.innerText = t, 1000); 
         }
-</body>
+    </script>
+    </body>
 </html>
+
