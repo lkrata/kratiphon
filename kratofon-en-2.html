@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z04Y4RZYFV"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-Z04Y4RZYFV');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kratofon - elektronické ucho</title>
+    <style>
+        body { background-color: black; color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; -webkit-user-select: none; user-select: none; }
+        #controls { background: #1a1a1a; padding: 5px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; border-bottom: 1px solid #333; z-index: 100; flex-shrink: 0; }
+        .group { display: flex; gap: 4px; align-items: center; border-right: 1px solid #444; padding-right: 8px; }
+        button { padding: 6px 10px; cursor: pointer; background: #333; color: white; border: 1px solid #555; border-radius: 4px; font-weight: bold; font-size: 13px; touch-action: manipulation; }
+        #btn-toggle { min-width: 70px; }
+        .running { background: #2d5a27; }
+        .stopped { background: #b30000; }
+        .active-lang { border: 2px solid #ffcc00 !important; background: #444; }
+        
+        #output-container { flex-grow: 1; padding: 10px 15px; overflow-y: auto; scroll-behavior: smooth; display: flex; gap: 20px; }
+        .column { flex: 1; font-size: 20px; line-height: 1.3; padding-bottom: 25vh; user-select: text; word-break: break-word; }
+        #output-en { border-right: 1px dashed #444; padding-right: 15px; display: none; }
+        
+        #controls img { width: 100px; height: 35px; margin: 3px 11px 3px 19px; }
+        #status-info { font-size: 11px; color: #ffcc00; margin-left: 5px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <a href="https://lkrata.github.io/kratofon/"><img src="images/logo.png" alt="Kratofon"></a>
+        <button id="btn-toggle" onclick="toggle()" class="stopped">START</button>
+        <div class="group">
+            <button id="lang-cs" onclick="setLang('cs-CZ')" class="active-lang">Česky</button>
+            <button id="lang-en" onclick="setLang('en-US')">EN -> CZ</button>
+        </div>
+        <div class="group">
+            <button onclick="sz(4)">Písmo +</button>
+            <button onclick="sz(-4)">Písmo -</button>
+        </div>
+        <div class="group">
+            <button onclick="bg('black')" style="background:black; width:20px; height:20px; border:1px solid #ffcc00"></button>
+            <button onclick="bg('white')" style="background:white; width:20px; height:20px; border:1px solid #ffcc00"></button>
+            <button onclick="bg('navy')" style="background:navy; width:20px; height:20px; border:1px solid #ffcc00"></button>
+            <button onclick="bg('darkgreen')" style="background:darkgreen; width:20px; height:20px; border:1px solid #ffcc00"></button>
+        </div>
+        <div class="group">
+            <button onclick="fg('white')" style="background:white; width:20px; height:20px; border:1px solid #ffcc00"></button>
+            <button onclick="fg('silver')" style="background:silver; width:20px; height:20px; border:1px solid #ffcc00"></button>
+            <button onclick="fg('yellow')" style="background:yellow; width:20px; height:20px; border:1px solid #ffcc00"></button>
+            <button onclick="fg('navy')" style="background:navy; width:20px; height:20px; border:1px solid #ffcc00"></button>
+            <button onclick="fg('black')" style="background:black; width:20px; height:20px; border:1px solid #ffcc00"></button>
+        </div>
+        <button onclick="cp()">Kopírovat</button>
+        <button onclick="cl()" style="background:#600">Smazat</button>
+        <span id="status-info"></span>
+    </div>
+
+    <div id="output-container">
+        <div id="output-en" class="column"></div>
+        <div id="output" class="column">Klikněte na START...</div>
+    </div>
+
+    <script>
+        const out = document.getElementById('output');
+        const outEn = document.getElementById('output-en');
+        const btn = document.getElementById('btn-toggle');
+        const cnt = document.getElementById('output-container');
+        const statusInfo = document.getElementById('status-info');
+        
+        let run = false;
+        let translateMode = false;
+        let finalTranscript = '';
+        let finalTranscriptEn = '';
+        let lastResultTime = Date.now();
+        const pauseLimit = 2500;
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let rec;
+
+        if (SpeechRecognition) {
+            rec = new SpeechRecognition();
+            rec.lang = 'cs-CZ';
+            rec.interimResults = true;
+            rec.continuous = true;
+
+            rec.onresult = async (e) => {
+                let interimTranscript = '';
+                let now = Date.now();
+
+                if (now - lastResultTime > pauseLimit && finalTranscript !== '' && !finalTranscript.endsWith('<br><br>')) {
+                    finalTranscript += '<br><br>';
+                    finalTranscriptEn += '<br><br>';
+                }
+                lastResultTime = now;
+
+                for (let i = e.resultIndex; i < e.results.length; i++) {
+                    const transcript = e.results[i][0].transcript;
+                    if (e.results[i].isFinal) {
+                        if (translateMode) {
+                            finalTranscriptEn += (finalTranscriptEn && !finalTranscriptEn.endsWith('<br><br>') ? ' ' : '') + transcript;
+                            const translated = await translateText(transcript);
+                            finalTranscript += (finalTranscript && !finalTranscript.endsWith('<br><br>') ? ' ' : '') + translated;
+                        } else {
+                            finalTranscript += (finalTranscript && !finalTranscript.endsWith('<br><br>') ? ' ' : '') + transcript;
+                        }
+                    } else {
+                        interimTranscript += transcript;
+                    }
+                }
+
+                if (translateMode) {
+                    outEn.innerHTML = finalTranscriptEn + '<span style="opacity: 0.6; font-style: italic;">' + (interimTranscript ? ' ' + interimTranscript : '') + '</span>';
+                    out.innerHTML = finalTranscript;
+                } else {
+                    out.innerHTML = finalTranscript + '<span style="opacity: 0.7; font-style: italic;">' + (interimTranscript ? ' ' + interimTranscript : '') + '</span>';
+                }
+                
+                cnt.scrollTop = cnt.scrollHeight;
+            };
+
+            rec.onend = () => { if (run) rec.start(); };
+            rec.onerror = (e) => { 
+                console.error("Speech Error:", e.error);
+                statusInfo.innerText = "CHYBA: " + e.error.toUpperCase();
+            };
+        } else {
+            alert("Váš prohlížeč nepodporuje rozpoznávání řeči. Použijte Google Chrome.");
+        }
+
+        function setLang(l) {
+            rec.lang = l;
+            translateMode = (l === 'en-US');
+            document.getElementById('lang-cs').className = (l === 'cs-CZ' ? 'active-lang' : '');
+            document.getElementById('lang-en').className = (l === 'en-US' ? 'active-lang' : '');
+            
+            outEn.style.display = translateMode ? 'block' : 'none';
+            if (run) { rec.stop(); }
+        }
+
+        async function translateText(text) {
+            if (!text.trim()) return text;
+            try {
+                statusInfo.innerText = "PŘEKLÁDÁM...";
+                const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|cs`);
+                const data = await res.json();
+                statusInfo.innerText = "";
+                if (data.responseStatus !== 200) return text;
+                return data.responseData.translatedText || text;
+            } catch (e) {
+                statusInfo.innerText = "LIMIT API";
+                return text;
+            }
+        }
+
+        function toggle() {
+            if (run) {
+                rec.stop(); run = false;
+                btn.innerText = "START"; btn.className = "stopped";
+            } else {
+                try {
+                    rec.start(); run = true;
+                    btn.innerText = "STOP"; btn.className = "running";
+                    if (out.innerText.includes("Klikněte")) {
+                        out.innerHTML = "";
+                        outEn.innerHTML = "";
+                    }
+                    lastResultTime = Date.now();
+                } catch(e) { console.error(e); }
+            }
+        }
+
+        function sz(d) { 
+            let s = parseInt(window.getComputedStyle(out).fontSize); 
+            out.style.fontSize = (s + d) + 'px'; 
+            outEn.style.fontSize = (s + d) + 'px'; 
+        }
+        function bg(c) { document.body.style.backgroundColor = c; }
+        function fg(c) { 
+            out.style.color = c; 
+            outEn.style.color = c; 
+        }
+        function cl() { 
+            finalTranscript = ''; 
+            finalTranscriptEn = ''; 
+            out.innerHTML = ''; 
+            outEn.innerHTML = ''; 
+        }
+        function cp() {
+            let textToCopy = translateMode ? `EN:\n${outEn.innerText}\n\nCZ:\n${out.innerText}` : out.innerText;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                let t = btn.innerText; btn.innerText = "OK!";
+                setTimeout(() => btn.innerText = t, 1000);
+            });
+        }
+    </script>
+</body>
+</html>
