@@ -79,56 +79,24 @@
         const pauseLimit = 2500;
 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        let rec;
+        let rec = new SpeechRecognition();
+        rec.lang = 'cs-CZ';
+        rec.interimResults = true;
+        rec.continuous = true;
 
-        if (SpeechRecognition) {
-            rec = new SpeechRecognition();
-            rec.lang = 'cs-CZ';
-            rec.interimResults = true;
-            rec.continuous = true;
-
-            rec.onresult = async (e) => {
-                let interimTranscript = '';
-                let now = Date.now();
-
-                if (now - lastResultTime > pauseLimit && finalTranscript !== '' && !finalTranscript.endsWith('<br><br>')) {
-                    finalTranscript += '<br><br>';
-                    finalTranscriptEn += '<br><br>';
-                }
-                lastResultTime = now;
-
-                for (let i = e.resultIndex; i < e.results.length; i++) {
-                    const transcript = e.results[i][0].transcript;
-                    if (e.results[i].isFinal) {
-                        if (translateMode) {
-                            finalTranscriptEn += (finalTranscriptEn && !finalTranscriptEn.endsWith('<br><br>') ? ' ' : '') + transcript;
-                            const translated = await translateText(transcript);
-                            finalTranscript += (finalTranscript && !finalTranscript.endsWith('<br><br>') ? ' ' : '') + translated;
-                        } else {
-                            finalTranscript += (finalTranscript && !finalTranscript.endsWith('<br><br>') ? ' ' : '') + transcript;
-                        }
-                    } else {
-                        interimTranscript += transcript;
-                    }
-                }
-
-                if (translateMode) {
-                    outEn.innerHTML = finalTranscriptEn + '<span style="opacity: 0.6; font-style: italic;">' + (interimTranscript ? ' ' + interimTranscript : '') + '</span>';
-                    out.innerHTML = finalTranscript;
-                } else {
-                    out.innerHTML = finalTranscript + '<span style="opacity: 0.7; font-style: italic;">' + (interimTranscript ? ' ' + interimTranscript : '') + '</span>';
-                }
-                
-                cnt.scrollTop = cnt.scrollHeight;
-            };
-
-            rec.onend = () => { if (run) rec.start(); };
-            rec.onerror = (e) => { 
-                console.error("Speech Error:", e.error);
-                statusInfo.innerText = "CHYBA: " + e.error.toUpperCase();
-            };
-        } else {
-            alert("Váš prohlížeč nepodporuje rozpoznávání řeči. Použijte Google Chrome.");
+        async function translateText(text) {
+            if (!text.trim()) return text;
+            try {
+                statusInfo.innerText = "PŘEKLÁDÁM...";
+                const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|cs`);
+                const data = await res.json();
+                statusInfo.innerText = "";
+                if (data.responseStatus !== 200) return text;
+                return data.responseData.translatedText || text;
+            } catch (e) {
+                statusInfo.innerText = "CHYBA API";
+                return text;
+            }
         }
 
         function setLang(l) {
@@ -141,28 +109,15 @@
             if (run) { rec.stop(); }
         }
 
-        async function translateText(text) {
-            if (!text.trim()) return text;
-            try {
-                statusInfo.innerText = "PŘEKLÁDÁM...";
-                const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|cs`);
-                const data = await res.json();
-                statusInfo.innerText = "";
-                if (data.responseStatus !== 200) return text;
-                return data.responseData.translatedText || text;
-            } catch (e) {
-                statusInfo.innerText = "LIMIT API";
-                return text;
-            }
-        }
-
         function toggle() {
             if (run) {
-                rec.stop(); run = false;
+                run = false;
+                rec.stop(); 
                 btn.innerText = "START"; btn.className = "stopped";
             } else {
                 try {
-                    rec.start(); run = true;
+                    run = true;
+                    rec.start(); 
                     btn.innerText = "STOP"; btn.className = "running";
                     if (out.innerText.includes("Klikněte")) {
                         out.innerHTML = "";
@@ -172,6 +127,54 @@
                 } catch(e) { console.error(e); }
             }
         }
+
+        rec.onresult = async (e) => {
+            let interimTranscript = '';
+            let now = Date.now();
+
+            if (now - lastResultTime > pauseLimit && finalTranscript !== '' && !finalTranscript.endsWith('<br><br>')) {
+                finalTranscript += '<br><br>';
+                finalTranscriptEn += '<br><br>';
+            }
+            lastResultTime = now;
+
+            for (let i = e.resultIndex; i < e.results.length; i++) {
+                const transcript = e.results[i][0].transcript;
+                if (e.results[i].isFinal) {
+                    if (translateMode) {
+                        finalTranscriptEn += (finalTranscriptEn && !finalTranscriptEn.endsWith('<br><br>') ? ' ' : '') + transcript;
+                        const translated = await translateText(transcript);
+                        finalTranscript += (finalTranscript && !finalTranscript.endsWith('<br><br>') ? ' ' : '') + translated;
+                    } else {
+                        finalTranscript += (finalTranscript && !finalTranscript.endsWith('<br><br>') ? ' ' : '') + transcript;
+                    }
+                } else {
+                    interimTranscript += transcript;
+                }
+            }
+
+            if (translateMode) {
+                outEn.innerHTML = finalTranscriptEn + '<span style="color: #888; font-style: italic;">' + (interimTranscript ? ' ' + interimTranscript : '') + '</span>';
+                out.innerHTML = finalTranscript;
+            } else {
+                out.innerHTML = finalTranscript + '<span style="color: #888; font-style: italic;">' + (interimTranscript ? ' ' + interimTranscript : '') + '</span>';
+            }
+            
+            cnt.scrollTop = cnt.scrollHeight;
+        };
+
+        rec.onerror = (e) => {
+            console.error(e);
+            if (e.error !== 'no-speech') {
+                statusInfo.innerText = "CHYBA: " + e.error.toUpperCase();
+            }
+        };
+
+        rec.onend = () => { 
+            if (run) {
+                try { rec.start(); } catch(e){}
+            } 
+        };
 
         function sz(d) { 
             let s = parseInt(window.getComputedStyle(out).fontSize); 
