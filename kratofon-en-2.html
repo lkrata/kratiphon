@@ -1,4 +1,4 @@
-<!DOCTYPE html><!--odradkovani-->
+<!DOCTYPE html>
 <html lang="cs">
 <head>
     <link rel="icon" type="image/png" href="images/favicon.png">    
@@ -91,7 +91,7 @@
             padding-bottom: 164px; 
             user-select: text; 
             word-break: break-word; 
-            /*border: 1px solid red;*/
+            border: 1px solid red;
         } 
 
         #output-en { 
@@ -200,7 +200,7 @@
                     outEn.innerHTML = finalTranscriptEn + (interimTranscript ? '<br><br><span style="opacity: 1; color: yellow; font-style: normal;">' + interimTranscript + '</span>' : '');
                     out.innerHTML = finalTranscript;
                 } else {
-                    out.innerHTML = finalTranscript + (interimTranscript ? '<br><br><span style="opacity: 0.7; font-style: italic;">' + interimTranscript + '</span>' : '');
+                    out.innerHTML = finalTranscript + (interimTranscript ? '<br><br><span style="opacity: 1; font-style: normal;">' + interimTranscript + '</span>' : '');
                 }
                 
                 cnt.scrollTop = cnt.scrollHeight;
