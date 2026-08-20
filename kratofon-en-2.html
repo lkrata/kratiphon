@@ -1,4 +1,4 @@
-<!DOCTYPE html><!--opacity 1-->
+<!DOCTYPE html>!--<style margin-->
 <html lang="cs">
 <head>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z04Y4RZYFV"></script>
@@ -11,22 +11,107 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kratofon - elektronické ucho</title>
-    <style>
-        body { background-color: black; color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; -webkit-user-select: none; user-select: none; }
-        #controls { background: #1a1a1a; padding: 5px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; border-bottom: 1px solid #333; z-index: 100; flex-shrink: 0; }
-        .group { display: flex; gap: 4px; align-items: center; border-right: 1px solid #444; padding-right: 8px; }
-        button { padding: 6px 10px; cursor: pointer; background: #333; color: white; border: 1px solid #555; border-radius: 4px; font-weight: bold; font-size: 13px; touch-action: manipulation; }
-        #btn-toggle { min-width: 70px; }
-        .running { background: #2d5a27; }
-        .stopped { background: #b30000; }
-        .active-lang { border: 2px solid #ffcc00 !important; background: #444; }
-        
-        #output-container { flex-grow: 1; padding: 10px 15px; overflow-y: auto; scroll-behavior: smooth; display: flex; gap: 20px; }
-        .column { flex: 1; font-size: 20px; line-height: 1.3; padding-bottom: 25vh; user-select: text; word-break: break-word; }
-        #output-en { border-right: 1px dashed #444; padding-right: 15px; display: none; }
-        
-        #controls img { width: 100px; height: 35px; margin: 3px 11px 3px 19px; }
-        #status-info { font-size: 11px; color: #ffcc00; margin-left: 5px; font-weight: bold; }
+    <style>        body {
+	background-color: black;
+	color: white;
+	font-family: sans-serif;
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	height: 100vh;
+	overflow: hidden;
+	-webkit-user-select: none;
+	user-select: none;
+}
+
+#controls {
+	background: #1a1a1a;
+	padding: 5px;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+	border-bottom: 1px solid #333;
+	z-index: 100;
+	flex-shrink: 0;
+}
+
+.group {
+	display: flex;
+	gap: 4px;
+	align-items: center;
+	border-right: 1px solid #444;
+	padding-right: 8px;
+}
+
+button {
+	padding: 6px 10px;
+	cursor: pointer;
+	background: #333;
+	color: white;
+	border: 1px solid #555;
+	border-radius: 4px;
+	font-weight: bold;
+	font-size: 13px;
+	touch-action: manipulation;
+}
+
+#btn-toggle {
+	min-width: 70px;
+}
+
+.running {
+	background: #2d5a27;
+}
+
+.stopped {
+	background: #b30000;
+}
+
+.active-lang {
+	border: 2px solid #ffcc00 !important;
+	background: #444;
+}
+
+#output-container {
+	flex-grow: 1;
+	padding: 10px 15px 64px 15px;
+/* Přidán spodní padding 64px pro celý kontejner */
+	overflow-y: auto;
+	scroll-behavior: smooth;
+	display: flex;
+	gap: 20px;
+}
+
+.column {
+	flex: 1;
+	font-size: 20px;
+	line-height: 1.3;
+	padding-bottom: 64px;
+/* Změněno z 25vh na pevné odsazení 64px */
+	user-select: text;
+	word-break: break-word;
+}
+
+#output-en {
+	border-right: 1px dashed #444;
+	padding-right: 15px;
+	display: none;
+}
+
+#controls img {
+	width: 100px;
+	height: 35px;
+	margin: 3px 11px 3px 19px;
+}
+
+#status-info {
+	font-size: 11px;
+	color: #ffcc00;
+	margin-left: 5px;
+	font-weight: bold;
+}
+
     </style>
 </head>
 <body>
